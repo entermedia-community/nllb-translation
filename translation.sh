@@ -1,1 +1,1 @@
-uvicorn main:app --host 0.0.0.0 --port 5000 --workers 4 &
+uvicorn main:app --host 0.0.0.0 --port 8600 --workers 4 &
