@@ -1,16 +1,20 @@
 from typing import Union, List, Optional
+import os
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["HF_HOME"] = "./models"
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import torch
 from functools import lru_cache
-from opencc import OpenCC
 
 app = FastAPI(title="eMedia Translation API")
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-model_name = "facebook/nllb-200-distilled-600M"
+model_name = "facebook/nllb-200-1.3B"
 
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSeq2SeqLM.from_pretrained(model_name, device_map="auto", dtype=torch.float16)

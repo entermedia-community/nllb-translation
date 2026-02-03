@@ -1,2 +1,2 @@
 export HF_HOME=./models
-hf download facebook/nllb-200-distilled-600M
+hf download facebook/nllb-200-1.3B
