@@ -2,7 +2,7 @@ from typing import Union, List, Optional
 import os
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-os.environ["HF_HOME"] = "./models"
+os.environ["HF_HOME"] = os.path.expanduser("~/models")
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
