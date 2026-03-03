@@ -5,9 +5,6 @@ from pydantic import BaseModel, Field
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import torch
 from functools import lru_cache
-import os
-
-os.environ["HF_HOME"] = os.path.expanduser("~/models")
 
 app = FastAPI(title="eMedia Translation API")
 
