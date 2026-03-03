@@ -3,7 +3,5 @@ uvicorn
 pydantic
 transformers
 torch
-opencc
 sentencepiece
-sacremoses
 accelerate
