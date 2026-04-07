@@ -3,18 +3,37 @@ from typing import Union, List, Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+from sacremoses import MosesPunctNormalizer
+from stopes.pipelines.monolingual.utils.sentence_split import get_split_algo
 import torch
+import nltk
 from functools import lru_cache
+
+nltk.download("punkt_tab")
 
 app = FastAPI(title="eMedia Translation API")
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
-model_name = "facebook/nllb-200-3.3B"
+MODEL_NAME = "facebook/nllb-200-3.3B"
 
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForSeq2SeqLM.from_pretrained(model_name, device_map="auto", dtype=torch.float16)
-model.to(DEVICE)
+def load_model():
+  model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME).to(device)
+  print(f"Model loaded in {device}")
+  return model
+
+model = load_model()
+
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+
+punct_normalizer = MosesPunctNormalizer(lang="en")
+
+
+@lru_cache(maxsize=202)
+def get_sentence_splitter(language_code: str):
+  short_code = language_code[:3]
+  return get_split_algo(short_code, "default")
+
 
 available_languages = {
   "en": "eng_Latn",
@@ -35,29 +54,44 @@ available_languages = {
 
 @lru_cache(maxsize=64)
 def translate_text(text: str, src: str, target: str, max_length: Optional[int] = None) -> str:
-  if max_length is None:
-    max_length = len(text.split()) * 2 + 50
   tokenizer.src_lang = src
-  inputs = tokenizer(
-    text, 
-    return_tensors="pt", 
-    padding=True, 
-    truncation=True, 
-    max_length=max_length
-  ).to(DEVICE)
+
+  text = punct_normalizer.normalize(text)
 
   target_id = tokenizer.convert_tokens_to_ids(target)
-  generated_tokens = model.generate(
-    **inputs, 
-    forced_bos_token_id=target_id, 
-    num_beams=5, 
-    early_stopping=True, 
-    max_length=max_length
-  )
-  return tokenizer.batch_decode(
-    generated_tokens, 
-    skip_special_tokens=True
-  )[0]
+  paragraphs = text.split("\n")
+  translated_paragraphs = []
+
+  for paragraph in paragraphs:
+    splitter = get_sentence_splitter(src)
+    sentences = list(splitter(paragraph))
+    translated_sentences = []
+
+    for sentence in sentences:
+      input_ids = (
+        tokenizer(sentence, return_tensors="pt")
+        .input_ids[0]
+        .cpu()
+        .numpy()
+        .tolist()
+      )
+      chunk_max_length = max_length if max_length is not None else len(input_ids) + 50
+      generated_tokens = model.generate(
+        input_ids=torch.tensor([input_ids]).to(device),
+        forced_bos_token_id=target_id,
+        max_length=chunk_max_length,
+        num_return_sequences=1,
+        num_beams=5,
+        no_repeat_ngram_size=4,
+        renormalize_logits=True,
+      )
+      translated_sentences.append(
+        tokenizer.decode(generated_tokens[0], skip_special_tokens=True)
+      )
+
+    translated_paragraphs.append(" ".join(translated_sentences))
+
+  return "\n".join(translated_paragraphs)
 
 @app.get("/")
 def read_root():
@@ -66,7 +100,7 @@ def read_root():
 @app.get("/health")
 @app.get("/health.ico")
 def health_check():
-  return {"status": "ok", "model": model_name, "device": DEVICE}
+  return {"status": "ok", "model": MODEL_NAME, "device": device}
 
 
 def verify_langs(source: str, targets: List[str]) -> Union[bool, str]:

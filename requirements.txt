@@ -5,3 +5,6 @@ transformers
 torch
 sentencepiece
 accelerate
+sacremoses
+stopes
+nltk
