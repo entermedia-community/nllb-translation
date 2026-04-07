@@ -10,7 +10,7 @@ app = FastAPI(title="eMedia Translation API")
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-model_name = "facebook/nllb-200-1.3B"
+model_name = "facebook/nllb-200-3.3B"
 
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSeq2SeqLM.from_pretrained(model_name, device_map="auto", dtype=torch.float16)
