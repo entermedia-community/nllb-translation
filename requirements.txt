@@ -5,6 +5,3 @@ transformers
 torch
 sentencepiece
 accelerate
-sacremoses
-nltk
-stopes[mono] @ git+https://github.com/facebookresearch/stopes@better-sentence-splitters
