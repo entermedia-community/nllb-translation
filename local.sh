@@ -1,0 +1,1 @@
+uvicorn main:app --port 8600 --host 127.0.0.1
