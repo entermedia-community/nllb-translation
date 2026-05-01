@@ -1,6 +1,10 @@
 #!/bin/bash
 lsof -ti :8600 | xargs -r kill -9
 
+if [[ -f ".venv/bin/activate" ]]; then
+  source .venv/bin/activate
+fi
+
 export CUDA_VISIBLE_DEVICES=1
 uvicorn main:app \
   --port 8600 \
