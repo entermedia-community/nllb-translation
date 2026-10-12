@@ -25,7 +25,7 @@ if [[ -f ".venv/bin/activate" ]]; then
 fi
 
 
-LOGFILE=/root/logs/uvicorn
+LOGFILE=/root/logs/translation
 mkdir -p "$LOGFILE"
 
 uvicorn main:app \
