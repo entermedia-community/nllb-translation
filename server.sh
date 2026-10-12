@@ -7,7 +7,7 @@
 lsof -ti :8600 | xargs -r kill -9
 
 #export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-1}"
-export CUDA_VISIBLE_DEVICES=1
+export CUDA_VISIBLE_DEVICES=0
 
 if [[ -f ".venv/bin/activate" ]]; then
   source .venv/bin/activate
